@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chore & Home Manager - 2,100 Sq Ft</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        /* Hide scrollbar for Chrome, Safari and Opera */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        /* Hide scrollbar for IE, Edge and Firefox */
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen pb-24">
+
+    <!-- Header -->
+    <header class="bg-indigo-600 text-white shadow-md sticky top-0 z-50">
+        <div class="max-w-md mx-auto px-4 py-4 flex justify-between items-center">
+            <div>
+                <h1 class="text-xl font-bold">Home Routine Tracker</h1>
+                <p class="text-xs text-indigo-100">2,100 Sq. Ft. • 2 Bathrooms</p>
+            </div>
+            <div id="streakBadge" class="bg-indigo-700 border border-indigo-500 text-xs px-3 py-1.5 rounded-full font-semibold flex items-center gap-1">
+                🔥 <span id="streakCount">0</span> Day Streak
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-md mx-auto px-4 py-6">
+
+        <!-- Day Selector Pills -->
+        <div class="flex gap-2 overflow-x-auto pb-3 mb-4 no-scrollbar" id="dayPills">
+            <!-- Dynamically populated via JS -->
+        </div>
+
+        <!-- Progress Card -->
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 mb-6">
+            <div class="flex justify-between items-center mb-2">
+                <h2 id="currentDayTitle" class="font-bold text-slate-700 text-lg">Today's Focus</h2>
+                <span id="progressText" class="text-sm font-semibold text-indigo-600">0%</span>
+            </div>
+            <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
+                <div id="progressBar" class="bg-indigo-600 h-full w-0 transition-all duration-300 rounded-full"></div>
+            </div>
+        </div>
+
+        <!-- Task List Header & Add Button -->
+        <div class="flex justify-between items-center mb-3">
+            <h3 class="font-bold text-slate-700 text-sm uppercase tracking-wider">Tasks</h3>
+            <button onclick="openAddModal()" class="text-xs bg-indigo-50 text-indigo-600 font-semibold px-3 py-1.5 rounded-lg hover:bg-indigo-100 transition">
+                + Add Task
+            </button>
+        </div>
+
+        <!-- Tasks Container -->
+        <div id="taskList" class="space-y-3">
+            <!-- Populated via JS -->
+        </div>
+
+    </main>
+
+    <!-- Bottom Navigation / Quick Switch -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 py-3 shadow-lg z-50">
+        <div class="max-w-md mx-auto px-6 flex justify-around text-xs font-semibold text-slate-500">
+            <button onclick="switchTab('daily')" id="navDaily" class="flex flex-col items-center gap-1 text-indigo-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                Routine
+            </button>
+            <button onclick="switchTab('monthly')" id="navMonthly" class="flex flex-col items-center gap-1 hover:text-indigo-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                Monthly Deep Clean
+            </button>
+        </div>
+    </nav>
+
+    <!-- Add Task Modal -->
+    <div id="taskModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden justify-center items-end sm:items-center z-50 p-4">
+        <div class="bg-white w-full max-w-md rounded-2xl p-6 shadow-xl">
+            <h3 class="text-lg font-bold text-slate-800 mb-4">Add Custom Task</h3>
+            <form id="addTaskForm" onsubmit="handleAddTask(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Task Title</label>
+                    <input type="text" id="newTaskTitle" required placeholder="e.g., Water indoor plants" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-600 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Category / Day</label>
+                    <select id="newTaskDay" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-600 text-sm bg-white">
+                        <option value="Monday">Monday</option>
+                        <option value="Tuesday">Tuesday</option>
+                        <option value="Wednesday">Wednesday</option>
+                        <option value="Thursday">Thursday</option>
+                        <option value="Friday">Friday</option>
+                        <option value="Saturday">Saturday</option>
+                        <option value="Sunday">Sunday</option>
+                        <option value="Daily">Daily Habit</option>
+                        <option value="Monthly">Monthly Deep Clean</option>
+                    </select>
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="closeAddModal()" class="flex-1 bg-slate-100 text-slate-600 font-semibold py-2.5 rounded-xl text-sm">Cancel</button>
+                    <button type="submit" class="flex-1 bg-indigo-600 text-white font-semibold py-2.5 rounded-xl text-sm hover:bg-indigo-700">Add Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const todayName = days[new Date().getDay()];
+        let activeTab = 'daily';
+        let selectedDay = todayName;
+
+        // Default Data Set tailored for 2,100 sq ft home (Including Weekends)
+        const defaultTasks = [
+            // Daily Habits
+            { id: 'd1', title: 'Make beds', day: 'Daily', completed: false, type: 'daily' },
+            { id: 'd2', title: 'Empty dishwasher / load breakfast dishes', day: 'Daily', completed: false, type: 'daily' },
+            { id: 'd3', title: 'Wipe down main kitchen counter & sink', day: 'Daily', completed: false, type: 'daily' },
+            { id: 'd4', title: 'Run dishwasher & reset kitchen sink', day: 'Daily', completed: false, type: 'daily' },
+            { id: 'd5', title: '5-minute floor sweep / room tidy', day: 'Daily', completed: false, type: 'daily' },
+
+            // Monday - Bathrooms (2 Full Baths)
+            { id: 'm1', title: 'Scrub 2 toilets inside and out', day: 'Monday', completed: false, type: 'weekly' },
+            { id: 'm2', title: 'Clean and sanitize sinks, counters, and mirrors', day: 'Monday', completed: false, type: 'weekly' },
+            { id: 'm3', title: 'Scrub showers, tubs, and glass doors', day: 'Monday', completed: false, type: 'weekly' },
+            { id: 'm4', title: 'Wash bath mats and hand towels', day: 'Monday', completed: false, type: 'weekly' },
+
+            // Tuesday - Bedrooms & Living
+            { id: 'tu1', title: 'Dust all flat surfaces & TV stands', day: 'Tuesday', completed: false, type: 'weekly' },
+            { id: 'tu2', title: 'Dust blinds and window sills', day: 'Tuesday', completed: false, type: 'weekly' },
+            { id: 'tu3', title: 'Change bedroom bed linens', day: 'Tuesday', completed: false, type: 'weekly' },
+            { id: 'tu4', title: 'Tidy living room cushions and blankets', day: 'Tuesday', completed: false, type: 'weekly' },
+
+            // Wednesday - Kitchen
+            { id: 'w1', title: 'Wipe down appliance exteriors (fridge, oven, microwave)', day: 'Wednesday', completed: false, type: 'weekly' },
+            { id: 'w2', title: 'Deep clean inside microwave', day: 'Wednesday', completed: false, type: 'weekly' },
+            { id: 'w3', title: 'Wipe down dining table and kitchen counters thoroughly', day: 'Wednesday', completed: false, type: 'weekly' },
+            { id: 'w4', title: 'Check fridge for expired food', day: 'Wednesday', completed: false, type: 'weekly' },
+
+            // Thursday - Floors (2,100 sq ft)
+            { id: 'th1', title: 'Vacuum all carpeted areas, rugs, and hallways', day: 'Thursday', completed: false, type: 'weekly' },
+            { id: 'th2', title: 'Vacuum and sweep hardwood / tile flooring', day: 'Thursday', completed: false, type: 'weekly' },
+            { id: 'th3', title: 'Mop all hard flooring throughout home', day: 'Thursday', completed: false, type: 'weekly' },
+
+            // Friday - Catch-Up & Trash
+            { id: 'f1', title: 'Take out trash and recycling bins', day: 'Friday', completed: false, type: 'weekly' },
+            { id: 'f2', title: 'Finish and fold remaining laundry', day: 'Friday', completed: false, type: 'weekly' },
+            { id: 'f3', title: 'Wipe down high-touch surfaces (doorknobs, light switches)', day: 'Friday', completed: false, type: 'weekly' },
+
+            // Saturday - Optional Catch-up / Outdoor / Car
+            { id: 'sa1', title: 'Catch up on any missed weekly chores', day: 'Saturday', completed: false, type: 'weekly' },
+            { id: 'sa2', title: 'Quick exterior porch/entryway sweep', day: 'Saturday', completed: false, type: 'weekly' },
+
+            // Sunday - Prep for Week Ahead
+            { id: 'su1', title: 'Meal plan for the upcoming week', day: 'Sunday', completed: false, type: 'weekly' },
+            { id: 'su2', title: 'Quick house reset & prep outfits/bags', day: 'Sunday', completed: false, type: 'weekly' },
+
+            // Monthly Deep Clean
+            { id: 'mo1', title: 'Vacuum baseboards and door frames', day: 'Monthly', completed: false, type: 'monthly' },
+            { id: 'mo2', title: 'Deep clean inside oven and refrigerator shelves', day: 'Monthly', completed: false, type: 'monthly' },
+            { id: 'mo3', title: 'Dust air vents, return grilles, and light fixtures', day: 'Monthly', completed: false, type: 'monthly' },
+            { id: 'mo4', title: 'Descale showerheads and clean drain catchers', day: 'Monthly', completed: false, type: 'monthly' },
+            { id: 'mo5', title: 'Test smoke and carbon monoxide detectors', day: 'Monthly', completed: false, type: 'monthly' }
+        ];
+
+        let tasks = JSON.parse(localStorage.getItem('home_tasks_2100_v2')) || defaultTasks;
+        let streak = parseInt(localStorage.getItem('home_streak')) || 3;
+
+        function saveData() {
+            localStorage.setItem('home_tasks_2100_v2', JSON.stringify(tasks));
+            localStorage.setItem('home_streak', streak);
+            document.getElementById('streakCount').innerText = streak;
+        }
+
+        function switchTab(tab) {
+            activeTab = tab;
+            document.getElementById('navDaily').className = tab === 'daily' ? 'flex flex-col items-center gap-1 text-indigo-600' : 'flex flex-col items-center gap-1 hover:text-indigo-600';
+            document.getElementById('navMonthly').className = tab === 'monthly' ? 'flex flex-col items-center gap-1 text-indigo-600' : 'flex flex-col items-center gap-1 hover:text-indigo-600';
+            
+            document.getElementById('dayPills').style.display = tab === 'daily' ? 'flex' : 'none';
+            render();
+        }
+
+        function renderDayPills() {
+            const container = document.getElementById('dayPills');
+            container.innerHTML = days.map(d => `
+                <button onclick="selectDay('${d}')" class="px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition ${selectedDay === d ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' : 'bg-white text-slate-600 border border-slate-200'}">
+                    ${d} ${d === todayName ? '· Today' : ''}
+                </button>
+            `).join('');
+        }
+
+        function selectDay(day) {
+            selectedDay = day;
+            render();
+        }
+
+        function toggleTask(id) {
+            tasks = tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t);
+            saveData();
+            render();
+
+            const currentTasks = getFilteredTasks();
+            if (currentTasks.length > 0 && currentTasks.every(t => t.completed)) {
+                confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
+            }
+        }
+
+        function getFilteredTasks() {
+            if (activeTab === 'monthly') {
+                return tasks.filter(t => t.type === 'monthly');
+            } else {
+                return tasks.filter(t => t.day === selectedDay || t.type === 'daily');
+            }
+        }
+
+        function render() {
+            renderDayPills();
+            const listContainer = document.getElementById('taskList');
+            const currentTasks = getFilteredTasks();
+
+            document.getElementById('currentDayTitle').innerText = activeTab === 'monthly' ? 'Monthly Deep Clean Checklist' : `${selectedDay}'s Focus + Daily Habits`;
+
+            const completedCount = currentTasks.filter(t => t.completed).length;
+            const totalCount = currentTasks.length;
+            const percentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+            
+            document.getElementById('progressText').innerText = `${percentage}%`;
+            document.getElementById('progressBar').style.width = `${percentage}%`;
+
+            if (currentTasks.length === 0) {
+                listContainer.innerHTML = `<div class="text-center py-10 text-slate-400 text-sm">No tasks scheduled for this day. Enjoy your break!</div>`;
+                return;
+            }
+
+            listContainer.innerHTML = currentTasks.map(t => `
+                <div onclick="toggleTask('${t.id}')" class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between cursor-pointer transition hover:border-indigo-200">
+                    <div class="flex items-center gap-3">
+                        <div class="w-6 h-6 rounded-lg border-2 flex items-center justify-center transition ${t.completed ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-300'}">
+                            ${t.completed ? '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>' : ''}
+                        </div>
+                        <span class="text-sm font-medium ${t.completed ? 'line-through text-slate-400' : 'text-slate-700'}">${t.title}</span>
+                    </div>
+                    <span class="text-[10px] uppercase tracking-wider px-2 py-1 bg-slate-100 text-slate-500 rounded-md font-semibold">${t.day}</span>
+                </div>
+            `).join('');
+        }
+
+        function openAddModal() {
+            document.getElementById('taskModal').classList.remove('hidden');
+            document.getElementById('taskModal').classList.add('flex');
+        }
+
+        function closeAddModal() {
+            document.getElementById('taskModal').classList.remove('flex');
+            document.getElementById('taskModal').classList.add('hidden');
+            document.getElementById('addTaskForm').reset();
+        }
+
+        function handleAddTask(e) {
+            e.preventDefault();
+            const title = document.getElementById('newTaskTitle').value;
+            const day = document.getElementById('newTaskDay').value;
+            const type = day === 'Monthly' ? 'monthly' : (day === 'Daily' ? 'daily' : 'weekly');
+
+            const newTask = {
+                id: 'custom_' + Date.now(),
+                title,
+                day,
+                completed: false,
+                type
+            };
+
+            tasks.push(newTask);
+            saveData();
+            closeAddModal();
+            render();
+        }
+
+        // Initial Load
+        saveData();
+        render();
+    </script>
+</body>
+</html>
